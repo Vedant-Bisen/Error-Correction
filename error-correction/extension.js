@@ -1,6 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-const vscode = require('vscode');
+const vscode = require("vscode");
+const fs = require("fs");
+const { spawn } = require("child_process");
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -8,30 +10,40 @@ const vscode = require('vscode');
 /**
  * @param {vscode.ExtensionContext} context
  */
+
+let terminal;
+
 function activate(context) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand("error-correction.helloWorld", () => {
+      terminal = terminal || vscode.window.createTerminal("Error Correction");
+      terminal.show();
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "error-correction" is now active!');
+      const process = spawn("cd");
+      let data = "";
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('error-correction.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+      process.stdout.on("data", (chunk) => {
+        data += chunk.toString();
+      });
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from error-correction!');
-		vscode.window.showInformationMessage("Helooo");
-	});
+      process.on("close", (code) => {
+        fs.writeFile("output.txt", data, (err) => {
+          console.log("file created");
 
-	context.subscriptions.push(disposable);
+          if (err) {
+            return console.log(err);
+          }
+        });
+      });
+    })
+  );
 }
+exports.activate = activate;
 
 // This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {
-	activate,
-	deactivate
-}
+  activate,
+  deactivate,
+};
